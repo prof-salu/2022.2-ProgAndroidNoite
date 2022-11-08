@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import Navegacao from './componentes/Navegacao';
 
 export default function App() {
@@ -8,7 +8,7 @@ export default function App() {
     <View style={styles.container}>
       <NavigationContainer>
         <Navegacao />
-      </NavigationContainer>      
+      </NavigationContainer>
     </View>
   );
 }
@@ -19,5 +19,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#ecf0f1',
     padding: 8,
-  }
+  },
 });

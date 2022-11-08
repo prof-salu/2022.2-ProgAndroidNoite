@@ -1,29 +1,70 @@
-import * as React from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import { Text, View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useIsFocused} from '@react-navigation/native';
 import * as SQLite from 'expo-sqlite';
 
+import {LivroContext} from './EnviaLivro';
+
 export default function Home() {
+  //Criando o banco de dados
+  const db = SQLite.openDatabase('db.MainDB');
 
-const db = SQLite.openDatabase('db.MainDB');
-
-const createTable = () => {
-  db.transaction((tx) => {
-    tx.executeSql('CREATE TABLE IF NOT EXISTS livro (' + 
-                    'codigo INTEGER PRIMARY KEY, ' + 
-                    'titulo TEXT, ' +
-                    'assunto TEXT, ' +
-                    'autor TEXT)');
-  });
-}
-
-
-const teste = [{codigo: 1, titulo: 'Aprendendo react', assunto: 'Programacao', editora: 'NOVATEC', autor: 'Zeca'}];
-
+  //importa a funcao do context
+  const {alteraLivro} = useContext(LivroContext);
+  
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
+
+  const [livros, setLivros] = useState([]);
+
+  useEffect(() => {
+    resetLivro();
+    pegaLivros();
+    createTable();
+  }, [isFocused]);
+
+  const createTable = () => {
+    db.transaction((tx) => {
+      tx.executeSql("CREATE TABLE IF NOT EXISTS livro (" +
+                    "codigo INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "titulo TEXT, " +
+                    "assunto TEXT, " +
+                    "editora TEXT, " +
+                    "autor TEXT)");
+    })
+  }
+
+  const apagaTabela = () => {
+    db.transaction((tx) => {
+      tx.executeSql('DROP TABLE livro');
+    })
+  }
+
+  const resetLivro = () => {
+    alteraLivro('', '', '', '', '');
+  }
+
+  const pegaLivros = () => {
+    db.transaction((tx) => {
+      tx.executeSql('SELECT codigo, titulo, assunto, editora, autor FROM livro', 
+                    [],
+                    (tx, resultado) => {
+                      var temp = [];
+                      for(let i = 0; i < resultado.rows.length; i++){
+                        temp.push(resultado.rows.item(i));
+                        setLivros(temp);
+                      }
+                    });
+    })
+  }
 
   function novoLivro(){
+    navigation.navigate('Formulario');
+  }
+
+  function enviaLivroForm(codigo, titulo, assunto, editora, autor){
+    alteraLivro(codigo, titulo, assunto, editora, autor);
     navigation.navigate('Formulario');
   }
   
@@ -31,10 +72,10 @@ const teste = [{codigo: 1, titulo: 'Aprendendo react', assunto: 'Programacao', e
     <View style={styles.container}>
       <FlatList 
         style={styles.lista}
-        data={teste}
+        data={livros}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item}) => (
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity style={styles.item} onPress={() => enviaLivroForm(item.codigo, item.titulo, item.assunto, item.editora, item.autor)}>
             <Text>ID: {item.codigo}</Text>
             <Text>Titulo: {item.titulo}</Text>
             <Text>Assunto: {item.assunto}</Text>
